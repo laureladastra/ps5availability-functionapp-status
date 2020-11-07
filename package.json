@@ -1,0 +1,22 @@
+{
+  "name": "ps5-availability-functionapp.nosync",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "start": "func start",
+    "test": "echo \"No tests yet...\""
+  },
+  "dependencies": {
+    "@laurekamalandua/ps5-availability": "^0.1.0",
+    "bunyan": "^1.8.14",
+    "bunyan-format": "^0.2.1",
+    "colors": "^1.4.0"
+  },
+  "devDependencies": {
+    "eslint": "^7.13.0",
+    "eslint-config-standard": "^16.0.1",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.2.1"
+  }
+}
