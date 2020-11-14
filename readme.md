@@ -1,3 +1,5 @@
+[![Build Status](https://dev.azure.com/quantaleap/PS5%20Availability/_apis/build/status/LaureKamalandua.ps5-availability-functionapp?branchName=main)](https://dev.azure.com/quantaleap/PS5%20Availability/_build/latest?definitionId=1&branchName=main)
+
 ## Introduction
 
 This application checks PS5 console availability at specified time intervals using time triggered Azure Functions.
