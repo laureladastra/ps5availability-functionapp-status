@@ -10,7 +10,7 @@ pool:
   vmImage: 'macOS-10.14'
 
 variables:
-  testFolder: '$(System.DefaultWorkingDirectory)/$(Build.Repository.Name)/tests/qa'
+  testFolder: '$(System.DefaultWorkingDirectory)/tests/qa'
 
 steps:
 - checkout: self
