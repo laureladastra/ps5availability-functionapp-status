@@ -19,11 +19,11 @@ steps:
     Write-Host "Configuring environment to run tests"
     $version = (Get-Package -Name 'Pester').Version
     if ($version -ne '4.10.0') {
-        Write-Host "##[warning]Detected incompatible Pester version ($version)."
+        Write-Warning "Detected incompatible Pester version ($version)."
         if ($version) {
-            Get-Package -Name Pester | Uninstall-Package -Scope CurrentUser
+            Get-Package -Name Pester -ProviderName NuGet | Uninstall-Package -Scope CurrentUser
         }
-        Install-Package -Name Pester -MaximumVersion '4.10.0' -Scope CurrentUser
+        Install-Package -Name Pester -MaximumVersion '4.10.0' -ProviderName NuGet -Scope CurrentUser
     }
     else {
         Write-Host "Pester is installed according to the requirements."
