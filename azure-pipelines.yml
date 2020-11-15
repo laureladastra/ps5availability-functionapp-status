@@ -21,9 +21,9 @@ steps:
     if ($version -ne '4.10.0') {
         Write-Warning "Detected incompatible Pester version ($version)."
         if ($version) {
-            Get-Package -Name Pester -ProviderName NuGet | Uninstall-Package -Scope CurrentUser
+            Get-Package -Name Pester -ProviderName PowerShellGet | Uninstall-Package -Scope CurrentUser
         }
-        Install-Package -Name Pester -MaximumVersion '4.10.0' -ProviderName NuGet -Scope CurrentUser
+        Install-Package -Name Pester -MaximumVersion '4.10.0' -ProviderName PowerShellGet -Scope CurrentUser
     }
     else {
         Write-Host "Pester is installed according to the requirements."
