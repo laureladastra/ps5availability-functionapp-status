@@ -4,21 +4,30 @@
 # https://aka.ms/yaml
 
 trigger:
-- master
+- main
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: 'macOS-10.14'
 
 steps:
 - script: |
-    npmVersionString=$(node -p "require('./package.json').version") 
-    echo "##vso[build.updatebuildnumber]$npmVersionString"
-  displayName: 'set build number'
+    version=$(node -p "require('./package.json').version") 
+    echo "##vso[build.updatebuildnumber]$version"
+  displayName: 'Configure build number from NPM package.json'
 
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
-
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+- powershell: |
+    Write-Host "Configuring environment to run tests"
+    $version = (Get-Package -Name 'Pester').Version
+    if ($version -ne '4.10.0') {
+        Write-Host "##[warning]Detected incompatible Pester version ($version)."
+        if ($version) {
+            Get-Package -Name Pester | Uninstall-Package -Scope CurrentUser
+        }
+        Install-Package -Name Pester -MaximumVersion '4.10.0' -Scope CurrentUser
+    }
+    else {
+        Write-Host "Pester is installed according to the requirements."
+    }
+  displayName: 'Configure test environment'
+  errorActionPreference: stop
+  
