@@ -5,13 +5,13 @@ pool:
   vmImage: 'macOS-10.14'
 
 variables:
-  testFolder: '$(System.DefaultWorkingDirectory)/tests/qa'
+  testFolder: '$(Build.SourcesDirectory)/tests/qa'
 
 steps:
   - checkout: self
+    displayName: Checkout and fetch repository
     clean: true
     persistCredentials: true
-    displayName: Checkout and fetch repository
   - script: |
       version=$(node -p "require('./package.json').version") 
       echo "##vso[build.updatebuildnumber]$version"
@@ -38,16 +38,38 @@ steps:
     displayName: Run quality assurance tests
     errorActionPreference: stop
   - task: PublishTestResults@2
+    displayName: Publish test results
     inputs:
       testResultsFormat: 'JUnit'
       testResultsFiles: '**/*Test*.xml'
       failTaskOnFailedTests: true
       testRunTitle: 'QA FunctionApp'
-    displayName: Publish test results
   - script: |
       echo "##[command]git clean --fdx"
       git clean -ffdx
-    displayName: Clean repository before publish
+    displayName: Clean root directory before publish
   - powershell: |
       Get-ChildItem -Path "$(testFolder)" -Recurse
     displayName: Confirm repository clean-up
+  - task: CopyFiles@2
+    displayName: 'Copy files to: $(Build.StagingDirectory)'
+    inputs:
+      CleanTargetFolder: true
+      SourceFolder: '$(Build.SourcesDirectory)'
+      Contents: '**'
+      TargetFolder: '$(Build.StagingDirectory)'
+  - task: ArchiveFiles@2
+    displayName: 'Archive files from directory'
+    inputs:
+      rootFolderOrFile: '$(Build.StagingDirectory)'
+      includeRootFolder: false
+      archiveType: 'zip'
+      archiveFile: '$(Build.StagingDirectory)/$(Build.BuildId)-v$(Build.BuildNumber).zip'
+      replaceExistingArchive: true
+
+  - task: PublishBuildArtifacts@1
+    displayName: Publish build artifacts
+    inputs:
+      PathtoPublish: '$(Build.StagingDirectory)/$(Build.BuildId)-v$(Build.BuildNumber).zip'
+      ArtifactName: '$(Build.BuildNumber)'
+      publishLocation: 'Container'
