@@ -9,7 +9,13 @@ trigger:
 pool:
   vmImage: 'macOS-10.14'
 
+variables:
+  testFolder: '$(System.DefaultWorkingDirectory)/$(Build.Repository.Name)/tests/qa'
+
 steps:
+- powershell: Write-Host "Repository location $(System.DefaultWorkingDirectory)/$(Build.Repository.Name)/tests/qa"
+  displayName: Get repository location on disk
+  
 - script: |
     version=$(node -p "require('./package.json').version") 
     echo "##vso[build.updatebuildnumber]$version"
@@ -19,15 +25,28 @@ steps:
     Write-Host "Configuring environment to run tests"
     $version = (Get-Package -Name 'Pester').Version
     if ($version -ne '4.10.0') {
-        Write-Warning "Detected incompatible Pester version ($version)."
+        Write-Warning "##vso[type=warning]Detected incompatible Pester version ($version)."
         if ($version) {
-            Get-Package -Name Pester -ProviderName PowerShellGet | Uninstall-Package -Scope CurrentUser
+            Get-Package -Name Pester -ProviderName PowerShellGet | Uninstall-Package -Scope CurrentUser -Force
         }
-        Install-Package -Name Pester -MaximumVersion '4.10.0' -ProviderName PowerShellGet -Scope CurrentUser
+        Install-Package -Name Pester -MaximumVersion '4.10.0' -ProviderName PowerShellGet -Scope CurrentUser -Force
+        Write-Host "Installed Pester version '$((Get-Package -Name 'Pester').Version)'"
     }
     else {
         Write-Host "Pester is installed according to the requirements."
     }
   displayName: 'Configure test environment'
   errorActionPreference: stop
-  
+- powershell: | 
+    Write-Host "Running QA tests for FunctionApp"
+    Invoke-Pester -Path $(testFolder)/QA.FunctionApp.Tests.ps1 -OutputFormat JUnitXml -OutputFile "QATestResults.xml" -EnableExit
+    Write-Host ($(Get-ChildItem)| Out-String)
+    displayName: Run QA tests (Pester)
+- task: PublishTestResults@2
+  inputs:
+    testResultsFormat: 'JUnit'
+    testResultsFiles: '**/*Test*.xml'
+    failTaskOnFailedTests: true
+    testRunTitle: 'QA FunctionApp'
+
+
