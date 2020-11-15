@@ -15,7 +15,8 @@ variables:
 steps:
 - checkout: self
   clean: true
-  displayName: 'Checkout and fetch repository'
+  persistCredentials: true
+  displayName: Checkout and fetch repository
 - script: |
     version=$(node -p "require('./package.json').version") 
     echo "##vso[build.updatebuildnumber]$version"
@@ -24,7 +25,7 @@ steps:
     Write-Host "Configuring environment to run tests"
     $version = (Get-Package -Name 'Pester').Version
     if ($version -ne '4.10.0') {
-        Write-Host "##[warning]Detected incompatible Pester version ($version)."
+        Write-Host "##[warning]detected incompatible Pester version ($version)."
         if ($version) {
             Get-Package -Name Pester -ProviderName PowerShellGet | Uninstall-Package -Scope CurrentUser -Force
         }
@@ -34,7 +35,7 @@ steps:
     else {
         Write-Host "Pester is installed according to the requirements."
     }
-  displayName: 'Configure test environment'
+  displayName: Configure test environment
   errorActionPreference: stop
 - powershell: | 
     Write-Host "Running QA tests for FunctionApp"
@@ -45,8 +46,13 @@ steps:
   inputs:
     testResultsFormat: 'JUnit'
     testResultsFiles: '**/*Test*.xml'
-    failTaskOnFailedTests: false
+    failTaskOnFailedTests: true
     testRunTitle: 'QA FunctionApp'
-  displayName: 'Publish test results'
-
-
+  displayName: Publish test results
+- script: |
+    echo "##[command]git clean --fdx"
+    git clean -ffdx
+  displayName: Clean repository before publish
+- powershell: |
+    Get-ChildItem -Path "$(testFolder)" -Recurse
+  displayName: Confirm repository clean-up
