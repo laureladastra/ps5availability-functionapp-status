@@ -44,7 +44,7 @@ steps:
       testResultsFormat: 'JUnit'
       testResultsFiles: '**/*Test*.xml'
       failTaskOnFailedTests: true
-      testRunTitle: 'QA FunctionApp'
+      testRunTitle: 'FunctionApp QA'
   - script: |
       echo "##[command]git clean --fdx"
       git clean -ffdx
@@ -62,7 +62,7 @@ steps:
       rootFolderOrFile: '$(Build.StagingDirectory)'
       includeRootFolder: false
       archiveType: 'zip'
-      archiveFile: '$(Build.StagingDirectory)/$(Build.BuildId)-v$(Build.BuildNumber).zip'
+      archiveFile: '$(Build.StagingDirectory)/$(applicationName)-v$(Build.BuildNumber).zip'
       replaceExistingArchive: true
 
   - task: PublishBuildArtifacts@1
