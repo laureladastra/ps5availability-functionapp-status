@@ -1,0 +1,53 @@
+trigger:
+  - main
+
+pool:
+  vmImage: 'macOS-10.14'
+
+variables:
+  testFolder: '$(System.DefaultWorkingDirectory)/tests/qa'
+
+steps:
+  - checkout: self
+    clean: true
+    persistCredentials: true
+    displayName: Checkout and fetch repository
+  - script: |
+      version=$(node -p "require('./package.json').version") 
+      echo "##vso[build.updatebuildnumber]$version"
+    displayName: Configure build number from NPM package.json
+  - powershell: |
+      Write-Host "Configuring environment to run tests"
+      $version = (Get-Package -Name 'Pester').Version
+      if ($version -ne '4.10.0') {
+          Write-Host "##[warning]detected incompatible Pester version ($version)."
+          if ($version) {
+              Get-Package -Name Pester -ProviderName PowerShellGet | Uninstall-Package -Scope CurrentUser -Force
+          }
+          Install-Package -Name Pester -MaximumVersion '4.10.0' -ProviderName PowerShellGet -Scope CurrentUser -Force
+          Write-Host "Installed Pester version '$((Get-Package -Name 'Pester').Version)'"
+      }
+      else {
+          Write-Host "Pester is installed according to the requirements."
+      }
+    displayName: Configure test environment
+    errorActionPreference: stop
+  - powershell: |
+      Write-Host "Running QA tests for FunctionApp"
+      Invoke-Pester -Path $(testFolder)/QA.FunctionApp.Tests.ps1 -OutputFormat JUnitXml -OutputFile "$(testFolder)/QATestResults.xml"
+    displayName: Run quality assurance tests
+    errorActionPreference: stop
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFormat: 'JUnit'
+      testResultsFiles: '**/*Test*.xml'
+      failTaskOnFailedTests: true
+      testRunTitle: 'QA FunctionApp'
+    displayName: Publish test results
+  - script: |
+      echo "##[command]git clean --fdx"
+      git clean -ffdx
+    displayName: Clean repository before publish
+  - powershell: |
+      Get-ChildItem -Path "$(testFolder)" -Recurse
+    displayName: Confirm repository clean-up
