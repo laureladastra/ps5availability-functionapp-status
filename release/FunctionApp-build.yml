@@ -6,6 +6,7 @@ pool:
 
 variables:
   testFolder: '$(Build.SourcesDirectory)/tests/qa'
+  applicationName: 'ps5-availability-functionapp'
 
 steps:
   - checkout: self
@@ -20,12 +21,12 @@ steps:
       Write-Host "Configuring environment to run tests"
       $version = (Get-Package -Name 'Pester').Version
       if ($version -ne '4.10.0') {
-          Write-Host "##[warning]detected incompatible Pester version ($version)."
+          Write-Host "##[warning]detected incompatible version $version for Pester"
           if ($version) {
-              Get-Package -Name Pester -ProviderName PowerShellGet | Uninstall-Package -Scope CurrentUser -Force
+              Get-Package -Name Pester -ProviderName PowerShellGet | Out-Null | Uninstall-Package -Scope CurrentUser -Force | Out-Null
           }
           Install-Package -Name Pester -MaximumVersion '4.10.0' -ProviderName PowerShellGet -Scope CurrentUser -Force
-          Write-Host "Installed Pester version '$((Get-Package -Name 'Pester').Version)'"
+          Write-Host "Installed Pester version $((Get-Package -Name 'Pester').Version)"
       }
       else {
           Write-Host "Pester is installed according to the requirements."
@@ -47,10 +48,7 @@ steps:
   - script: |
       echo "##[command]git clean --fdx"
       git clean -ffdx
-    displayName: Clean root directory before publish
-  - powershell: |
-      Get-ChildItem -Path "$(testFolder)" -Recurse
-    displayName: Confirm repository clean-up
+    displayName: Clean directory before publish
   - task: CopyFiles@2
     displayName: 'Copy files to: $(Build.StagingDirectory)'
     inputs:
@@ -70,6 +68,6 @@ steps:
   - task: PublishBuildArtifacts@1
     displayName: Publish build artifacts
     inputs:
-      PathtoPublish: '$(Build.StagingDirectory)/$(Build.BuildId)-v$(Build.BuildNumber).zip'
+      PathtoPublish: '$(Build.StagingDirectory)/$(applicationName)-v$(Build.BuildNumber).zip'
       ArtifactName: '$(Build.BuildNumber)'
       publishLocation: 'Container'
