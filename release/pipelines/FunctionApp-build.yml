@@ -6,6 +6,7 @@ pool:
 
 variables:
   testFolder: '$(Build.SourcesDirectory)/tests/qa'
+  functionAppFolder: '$(Build.SourcesDirectory)/functionapp'
   applicationName: 'ps5-availability-functionapp'
 
 steps:
@@ -14,6 +15,7 @@ steps:
     clean: true
     persistCredentials: true
   - script: |
+      cd $(functionAppFolder)
       version=$(node -p "require('./package.json').version") 
       echo "##vso[build.updatebuildnumber]$version"
     displayName: Configure build number from NPM package.json
