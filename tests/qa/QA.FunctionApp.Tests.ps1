@@ -1,8 +1,9 @@
 # fetch project directories and files
 $parentFolder = Split-Path -Path (Split-Path $PSScriptRoot -Parent) -Parent
-$folderItems = Get-ChildItem -Path $parentFolder -Force
-$functionFolders = $folderItems | Where-Object { $_.PSIsContainer -and $_.Name -match '^[P]_' }
-$systemFolders = 'release', 'tests'
+$parentFolderItems = Get-ChildItem -Path $parentFolder -Force
+$functionFolder = Get-ChildItem -Path "$parentFolder$([System.IO.Path]::DirectorySeparatorChar)functionapp"
+$functionAppFolders = $functionFolder | Where-Object { $_.PSIsContainer -and $_.Name -match '^[P]_' }
+$systemFolders = 'release', 'tests', 'functionapp'
 $sourceControlFiles = '.gitattributes', '.gitignore'
 $runtimeFiles = 'host.json', 'package.json'
 $countryCodes = 'NL', 'BE', 'DE', 'UK', 'US'
@@ -14,11 +15,11 @@ Describe 'FunctionApp QA Tests' -Tag 'System' {
             param(
                 $folder = $parentFolder
             )
-            $sourceControlFiles | Should -BeIn $folderItems.Where{ -not $_.PSIsContainer }.Name -Because 'root directory should include the required source control files'
+            $sourceControlFiles | Should -BeIn $parentFolderItems.Where{ -not $_.PSIsContainer }.Name -Because 'root directory should include the required source control files'
         }
 
         It "Directory contains the required project folders: $($systemFolders -join ',')" {
-            $systemFolders | Should -BeIn $folderItems.Where{ $_.PSIsContainer }.Name
+            $systemFolders | Should -BeIn $parentFolderItems.Where{ $_.PSIsContainer }.Name
         }
     }
 
@@ -33,12 +34,12 @@ Describe 'FunctionApp QA Tests' -Tag 'System' {
                 'package.json' { $message = 'file should be present to install the dependencies' }
                 default { $message = 'File should be present in directory' }
             }
-            $folderItems.Name | Should -Contain $file -Because $message
+            $functionFolder.Name | Should -Contain $file -Because $message
         }
     }
 
     Context 'Azure Functions have the correct structure' {
-        $testCases = $functionFolders.ForEach{
+        $testCases = $functionAppFolders.ForEach{
             @{
                 name     = $_.Name
                 fullPath = $_.FullName
@@ -57,7 +58,7 @@ Describe 'FunctionApp QA Tests' -Tag 'System' {
             'function.json', 'index.js' | Should -BeExactly (Get-ChildItem $fullPath).Name -Because "folder '$($name)' should include the files function.json and index.json"
         }
 
-        $testCases = $functionFolders.ForEach{
+        $testCases = $functionAppFolders.ForEach{
             $file = (Get-ChildItem $_.FullName).Where{ $_.Name -eq 'function.json' }
             $fileJson = Get-Content -Path $file -ErrorAction Stop
             @{
