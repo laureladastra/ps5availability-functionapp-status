@@ -1,6 +1,7 @@
 # fetch project directories and files
 $parentFolder = Split-Path -Path (Split-Path $PSScriptRoot -Parent) -Parent
 $parentFolderItems = Get-ChildItem -Path $parentFolder -Force
+
 $functionFolder = Get-ChildItem -Path "$parentFolder$([System.IO.Path]::DirectorySeparatorChar)functionapp"
 $functionAppFolders = $functionFolder | Where-Object { $_.PSIsContainer -and $_.Name -match '^[P]_' }
 $systemFolders = 'release', 'tests', 'functionapp'
